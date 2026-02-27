@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports Export - AI Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* DARK MODE THEME */
+        body { background-color: #0a0a0a; color: #87CEEB; scroll-behavior: smooth; font-family: 'Inter', sans-serif;}
+        .sidebar { background-color: #000000; width: 260px; height: 100vh; position: fixed; top: 0; left: 0; z-index: 100; border-right: 1px solid #222;}
+        .sidebar a { color: #FFFFFF; text-decoration: none; padding: 12px 20px; border-radius: 8px; margin-bottom: 5px; display: block; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background-color: #87CEEB; color: #000000; font-weight: bold; }
+        .main-content { margin-left: 260px; padding: 40px; }
+        .figma-card { background: #121212; border-radius: 12px; border: 1px solid #222; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.3s, box-shadow 0.3s; }
+        .figma-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.8); border-color: #87CEEB;}
+        
+        /* Global Text Colors */
+        h1, h2, h3, h4, h5, h6, strong, span, p, label { color: #87CEEB !important; }
+        small { color: #FFFFFF; font-weight: 500; }
+        
+        /* Form elements dark mode */
+        .form-select, .form-check-input { background-color: #222; border-color: #444; color: #FFF; }
+        .form-select:focus { background-color: #333; color: #FFF; border-color: #87CEEB; box-shadow: none;}
+        .form-check-input:checked { background-color: #98FF98; border-color: #98FF98; }
+        
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-up { animation: fadeUp 0.6s ease-out forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; }
+    </style>
+</head>
+<body>
+    <div class="sidebar p-4 d-flex flex-column">
+        <h4 style="color:#87CEEB" class="mb-0">AI Tracker</h4><small class="mb-4">Retail Analytics</small>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/zones">Zone Comparison</a>
+        <a href="/statistics">Statistical Analysis</a>
+        <a href="/export" class="active">Reports Export</a>
+        <a href="/gdpr">GDPR Privacy Mode</a>
+    </div>
+
+    <div class="main-content">
+        <div class="mb-4 anim-up">
+            <h2>Reports Export</h2>
+            <small>Export analytics data in CSV, XLSX, or PDF format</small>
+        </div>
+
+        <div class="figma-card anim-up d-1 mb-4">
+            <h5 class="mb-4">Configure Export</h5>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Report Type</label>
+                    <select class="form-select py-2">
+                        <option>Footfall Analytics (Unit 10 Data)</option>
+                        <option>Statistical Analysis Report</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Time Range</label>
+                    <select class="form-select py-2">
+                        <option>Last 7 Days (Sprint 1)</option>
+                        <option>All Time</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="form-label small fw-bold mt-3">Data Fields to Include</label>
+            <div class="row g-3 mb-5 border-bottom border-secondary pb-4">
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label ms-2">Timestamp</label></div></div>
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label ms-2">Zone ID</label></div></div>
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label ms-2">Dwell Time</label></div></div>
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label ms-2">Engagement Score</label></div></div>
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label ms-2">AI Confidence</label></div></div>
+                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" checked disabled><label class="form-check-label ms-2" style="color: #666 !important;">Detection ID (Anonymized)</label></div></div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <button onclick="downloadReport('csv')" class="btn w-100 py-3 fw-bold rounded-3 shadow-sm transition" style="background-color: #98FF98; color: #000;">
+                        📄 Export CSV
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button onclick="downloadReport('xlsx')" class="btn w-100 py-3 fw-bold rounded-3 shadow-sm transition" style="background-color: #87CEEB; color: #000;">
+                        📊 Export XLSX
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button onclick="downloadPDF()" id="pdf-btn" class="btn w-100 py-3 fw-bold rounded-3 shadow-sm transition text-white" style="background-color: #ff4d4d;">
+                        📑 Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="figma-card anim-up d-2 d-flex align-items-center gap-3 py-3" style="border-color: #98FF98; background-color: rgba(152, 255, 152, 0.05);">
+            <span class="fs-4">🛡️</span>
+            <div>
+                <h6 style="color: #98FF98 !important;" class="mb-1 fw-bold">GDPR Compliant Exports</h6>
+                <small>All exported data is fully anonymized with encrypted DetectionIDs. No PII is included in compliance with GDPR regulations.</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Logic for CSV & XLSX (Pulls directly from Flask Backend)
+        function downloadReport(format) {
+            window.location.href = `/api/export?format=${format}`;
+        }
+
+        // 2. Logic for PDF (Generates locally for styling and speed)
+        async function downloadPDF() {
+            const btn = document.getElementById('pdf-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Generating...";
+
+            try {
+                // Fetch the raw CSV data from our working backend route
+                const res = await fetch('/api/export?format=csv');
+                const csvText = await res.text();
+                
+                // Parse CSV text into rows for the PDF table
+                const rows = csvText.trim().split('\n').map(row => row.split(','));
+                const headers = rows[0];
+                
+                // For a PDF, we don't want 5000 rows, it will crash the browser. Let's slice the latest 500 rows.
+                const body = rows.slice(1, 500).filter(r => r.length > 1);
+
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+
+                // Add Document Titles
+                doc.setFontSize(18);
+                doc.setTextColor(20, 20, 20);
+                doc.text("AI Footfall Tracker - Analytics Report", 14, 22);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text("GDPR Compliant Export | Generated: " + new Date().toLocaleString(), 14, 30);
+                doc.text("* Note: PDF preview limited to latest 500 records. Use CSV/XLSX for full Big Data export.", 14, 36);
+
+                // Add the Data Table
+                doc.autoTable({
+                    startY: 42,
+                    head: [headers],
+                    body: body,
+                    theme: 'striped',
+                    headStyles: { fillColor: [135, 206, 235], textColor: [0, 0, 0] }, // Sky Blue Header
+                    alternateRowStyles: { fillColor: [245, 245, 245] },
+                    styles: { fontSize: 8, cellPadding: 2 }
+                });
+
+                // Trigger Download
+                doc.save('Footfall_Analytics_Report.pdf');
+            } catch (error) {
+                console.error(error);
+                alert("An error occurred while generating the PDF.");
+            }
+            
+            // Reset button text
+            btn.innerText = originalText;
+        }
+    </script>
+</body>
+</html>
